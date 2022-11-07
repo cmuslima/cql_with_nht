@@ -9,7 +9,7 @@ import torch.optim as optim
 from torch import nn as nn
 import torch.nn.functional as F
 
-from .model import Scalar, soft_target_update
+from SimpleSAC.model import Scalar, soft_target_update
 
 
 class SAC(object):
@@ -81,7 +81,6 @@ class SAC(object):
     def train(self, batch):
         self._total_steps += 1
 
-        #print(batch.keys())
         observations = batch['observations']
         actions = batch['actions']
         rewards = batch['rewards']
@@ -92,6 +91,7 @@ class SAC(object):
             dones = batch['dones']
 
         new_actions, log_pi = self.policy(observations)
+
         if self.config.use_automatic_entropy_tuning:
             alpha_loss = -(self.log_alpha() * (log_pi + self.config.target_entropy).detach()).mean()
             alpha = self.log_alpha().exp() * self.config.alpha_multiplier
@@ -107,7 +107,6 @@ class SAC(object):
         policy_loss = (alpha*log_pi - q_new_actions).mean()
 
         """ Q function loss """
-
         q1_pred = self.qf1(observations, actions)
         q2_pred = self.qf2(observations, actions)
 
@@ -121,7 +120,7 @@ class SAC(object):
             target_q_values = target_q_values - alpha * next_log_pi
 
 
-        dones = self.update_terminal_info_from_data_batch(dones)
+        #dones = self.update_terminal_info_from_data_batch(dones)
 
         q_target = self.config.reward_scale * rewards + (1. - dones) * self.config.discount * target_q_values
         qf1_loss = F.mse_loss(q1_pred, q_target.detach())
